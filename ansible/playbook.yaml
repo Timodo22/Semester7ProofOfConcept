@@ -1,12 +1,12 @@
 - hosts: all
-  become: yes
+  become: true
   tasks:
     - name: Update apt cache
-      apt: update_cache=yes
+      apt: update_cache=true
 
 # 1. DATABASE SERVER
 - hosts: database
-  become: yes
+  become: true
   tasks:
     - name: Installeer Postgres
       apt: name=postgresql state=present
@@ -15,7 +15,7 @@
 
 # 2. API SERVER
 - hosts: api
-  become: yes
+  become: true
   tasks:
     - name: Installeer Python en PIP
       apt: name={{ item }} state=present
@@ -28,7 +28,7 @@
 
 # 3. FRONTEND SERVER
 - hosts: frontend
-  become: yes
+  become: true
   tasks:
     - name: Installeer Nginx
       apt: name=nginx state=present
@@ -37,7 +37,7 @@
 
 # 4. MONITORING SERVER
 - hosts: monitor
-  become: yes
+  become: true
   tasks:
     - name: Installeer Prometheus
       apt: name=prometheus state=present
