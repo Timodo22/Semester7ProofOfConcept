@@ -7,7 +7,9 @@ resource "azurerm_resource_group" "poc" {
   location = "West Europe"
 }
 
-# Netwerk
+# =========================
+# NETWERK
+# =========================
 resource "azurerm_virtual_network" "vn" {
   name                = "poc-network"
   address_space       = ["10.0.0.0/16"]
@@ -22,17 +24,42 @@ resource "azurerm_subnet" "sn" {
   address_prefixes     = ["10.0.2.0/24"]
 }
 
-# Publieke IP's (4 stuks)
+# =========================
+# ✅ NETWORK SECURITY GROUP MET SSH
+# =========================
+resource "azurerm_network_security_group" "ssh_nsg" {
+  name                = "nsg-ssh"
+  location            = azurerm_resource_group.poc.location
+  resource_group_name = azurerm_resource_group.poc.name
+
+  security_rule {
+    name                       = "Allow-SSH"
+    priority                   = 1000
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "22"
+    source_address_prefix      = "*"
+    destination_address_prefix = "*"
+  }
+}
+
+# =========================
+# PUBLIEKE IP'S
+# =========================
 resource "azurerm_public_ip" "ips" {
   count               = 4
   name                = "ip-${count.index}"
   location            = azurerm_resource_group.poc.location
   resource_group_name = azurerm_resource_group.poc.name
-  allocation_method   = "Static"  # <--- DIT IS DE WIJZIGING (Was Dynamic)
-  sku                 = "Standard" # We zetten deze er expliciet bij voor de zekerheid
+  allocation_method   = "Static"
+  sku                 = "Standard"
 }
 
-# Netwerk Interfaces
+# =========================
+# NETWERK INTERFACES + KOPPELING NSG
+# =========================
 resource "azurerm_network_interface" "nics" {
   count               = 4
   name                = "nic-${count.index}"
@@ -47,7 +74,16 @@ resource "azurerm_network_interface" "nics" {
   }
 }
 
-# De 4 Virtual Machines (0=DB, 1=API, 2=Front, 3=Monitor)
+# ✅ Koppelt NSG aan alle NIC's
+resource "azurerm_network_interface_security_group_association" "nsg_attach" {
+  count                     = 4
+  network_interface_id      = azurerm_network_interface.nics[count.index].id
+  network_security_group_id = azurerm_network_security_group.ssh_nsg.id
+}
+
+# =========================
+# VIRTUAL MACHINES
+# =========================
 resource "azurerm_linux_virtual_machine" "vms" {
   count               = 4
   name                = element(["db-server", "api-server", "frontend-server", "monitor-server"], count.index)
@@ -59,7 +95,7 @@ resource "azurerm_linux_virtual_machine" "vms" {
 
   admin_ssh_key {
     username   = "azureuser"
-    public_key = file("id_rsa_poc.pub") # Zorg dat dit bestand bestaat!
+    public_key = file("id_rsa_poc.pub")
   }
 
   os_disk {
@@ -75,7 +111,9 @@ resource "azurerm_linux_virtual_machine" "vms" {
   }
 }
 
-# Dit maakt automatisch het bestand aan dat Ansible nodig heeft
+# =========================
+# ANSIBLE INVENTORY
+# =========================
 resource "local_file" "ansible_inventory" {
   content = <<EOF
 [database]
