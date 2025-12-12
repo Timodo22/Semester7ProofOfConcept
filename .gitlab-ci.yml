@@ -12,8 +12,13 @@ deploy_terraform:
     name: hashicorp/terraform:light
     entrypoint: [""] # <--- DIT IS DE BELANGRIJKE FIX VOOR DE ERROR
   before_script:
-    - cd terraform
-    - terraform init
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+    # Gebruik 'cat' in plaats van 'cp'. Dit werkt veiliger met GitLab File variables.
+    # Als $SSH_PRIVATE_KEY een bestandspad is, leest cat de inhoud en schrijft het naar id_rsa.
+    - cat "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+    - chmod 600 ~/.ssh/id_rsa
+    - export ANSIBLE_HOST_KEY_CHECKING=False
   script:
     - terraform apply -auto-approve
     # Verplaats de gemaakte inventory naar de hoofdmap
