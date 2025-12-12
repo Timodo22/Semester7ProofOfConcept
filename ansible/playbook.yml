@@ -63,8 +63,11 @@
     - name: Kopieer app code
       copy: src=../code/main.py dest=/home/azureuser/main.py
 
+    # --- HIER ZAT DE FOUT ---
     - name: Stop oude API proces (indien aanwezig)
-      shell: "pkill -f uvicorn || true"
+      # We zoeken nu specifiek naar "uvicorn main:app" om te voorkomen dat we Ansible zelf killen
+      shell: "pkill -f 'uvicorn main:app' || true"
+      ignore_errors: true
 
     - name: Start API met connectie naar Database
       shell: |
