@@ -7,9 +7,7 @@ resource "azurerm_resource_group" "poc" {
   location = "West Europe"
 }
 
-# =========================
-# NETWERK
-# =========================
+
 resource "azurerm_virtual_network" "vn" {
   name                = "poc-network"
   address_space       = ["10.0.0.0/16"]
@@ -24,9 +22,7 @@ resource "azurerm_subnet" "sn" {
   address_prefixes     = ["10.0.2.0/24"]
 }
 
-# =========================
-# ✅ NETWORK SECURITY GROUP (SSH, HTTP, API, DB, MONITOR)
-# =========================
+
 resource "azurerm_network_security_group" "ssh_nsg" {
   name                = "nsg-allow-all-poc"
   location            = azurerm_resource_group.poc.location
@@ -93,9 +89,7 @@ resource "azurerm_network_security_group" "ssh_nsg" {
   }
 }
 
-# =========================
-# PUBLIEKE IP'S
-# =========================
+
 resource "azurerm_public_ip" "ips" {
   count               = 4
   name                = "ip-${count.index}"
@@ -105,9 +99,7 @@ resource "azurerm_public_ip" "ips" {
   sku                 = "Standard"
 }
 
-# =========================
-# NETWERK INTERFACES + KOPPELING NSG
-# =========================
+
 resource "azurerm_network_interface" "nics" {
   count               = 4
   name                = "nic-${count.index}"
@@ -122,16 +114,14 @@ resource "azurerm_network_interface" "nics" {
   }
 }
 
-# ✅ Koppelt NSG aan alle NIC's
+
 resource "azurerm_network_interface_security_group_association" "nsg_attach" {
   count                     = 4
   network_interface_id      = azurerm_network_interface.nics[count.index].id
   network_security_group_id = azurerm_network_security_group.ssh_nsg.id
 }
 
-# =========================
-# VIRTUAL MACHINES
-# =========================
+
 resource "azurerm_linux_virtual_machine" "vms" {
   count               = 4
   name                = element(["db-server", "api-server", "frontend-server", "monitor-server"], count.index)
@@ -159,9 +149,7 @@ resource "azurerm_linux_virtual_machine" "vms" {
   }
 }
 
-# =========================
-# ANSIBLE INVENTORY
-# =========================
+
 resource "local_file" "ansible_inventory" {
   content = <<EOF
 [database]

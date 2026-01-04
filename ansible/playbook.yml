@@ -64,12 +64,10 @@
       copy: src=../code/main.py dest=/home/azureuser/main.py
 
     - name: Stop oude API proces (indien aanwezig)
-      # Regex trucje: [u]vicorn zorgt dat hij niet zichzelf killt
       shell: "pkill -f '[u]vicorn' || true"
       ignore_errors: true
 
     - name: Start API met connectie naar Database
-      # AANGEPAST: We gebruiken direct de groep waarde, niet hostvars
       shell: |
         export DB_HOST="{{ groups['database'][0] }}"
         nohup uvicorn main:app --host 0.0.0.0 --port 8000 > api.log 2>&1 &
@@ -87,7 +85,6 @@
       copy: src=../code/index.html dest=/var/www/html/index.html
 
     - name: Zet juiste API IP in HTML (Koppeling maken)
-      # AANGEPAST: We gebruiken direct de groep waarde
       replace:
         path: /var/www/html/index.html
         regexp: 'API_URL_PLACEHOLDER'
@@ -101,7 +98,6 @@
       apt: name=prometheus state=present
 
     - name: Configureer Prometheus (Scrape API)
-      # AANGEPAST: We gebruiken direct de groep waarde
       copy:
         dest: /etc/prometheus/prometheus.yml
         content: |
