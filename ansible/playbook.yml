@@ -99,10 +99,12 @@
       loop: [prometheus, apt-transport-https, software-properties-common, wget]
 
     # --- PROMETHEUS CONFIG ---
+    # Hier gebruiken we {% raw %} zodat Ansible niet crasht op {{ $labels... }}
     - name: Maak Alert Rules bestand aan
       copy:
         dest: /etc/prometheus/alert_rules.yml
         content: |
+          {% raw %}
           groups:
           - name: security_alerts
             rules:
@@ -114,6 +116,7 @@
               annotations:
                 summary: "Brute Force Detected op IP {{ $labels.ip }}"
                 description: "IP {{ $labels.ip }} ({{ $labels.country }}) heeft meer dan 3 keer gefaald."
+          {% endraw %}
 
     - name: Configureer Prometheus
       copy:
